@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// Stockly Firestore security rules
+// --------------------------------
+// - Every document lives under users/{userId}.
+// - A signed-in user can only read or write documents where userId == their own UID.
+// - Anything not matched below is denied by default (no public access).
+// - Writes are checked for the expected shape so bad data cannot be saved.
+//
+// Paste this into Firebase console > Firestore Database > Rules > Publish.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function validCategory(c) {
+      return c in ['Groceries', 'Toiletries', 'Cleaning Supplies', 'Kitchen Essentials', 'Others'];
+    }
+
+    function validStatus(s) {
+      return s in ['available', 'low_stock', 'out_of_stock'];
+    }
+
+    function validName(n) {
+      return n is string && n.size() > 0 && n.size() <= 100;
+    }
+
+    function optionalNumber(d, field) {
+      return !(field in d) || d[field] == null || (d[field] is number && d[field] >= 0);
+    }
+
+    function optionalString(d, field, max) {
+      return !(field in d) || d[field] == null || (d[field] is string && d[field].size() <= max);
+    }
+
+    // users/{userId}: the profile document
+    match /users/{userId} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() <= 100
+        && request.resource.data.email is string;
+
+      // users/{userId}/items/{itemId}: household inventory
+      match /items/{itemId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validName(request.resource.data.name)
+          && validCategory(request.resource.data.category)
+          && validStatus(request.resource.data.status)
+          && optionalNumber(request.resource.data, 'quantity')
+          && optionalString(request.resource.data, 'unit', 30)
+          && optionalString(request.resource.data, 'notes', 500);
+      }
+
+      // users/{userId}/shoppingList/{shoppingItemId}
+      match /shoppingList/{shoppingItemId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && validName(request.resource.data.name)
+          && validCategory(request.resource.data.category)
+          && request.resource.data.purchased is bool
+          && optionalNumber(request.resource.data, 'quantity')
+          && optionalString(request.resource.data, 'unit', 30);
+      }
+
+      // users/{userId}/purchaseHistory/{purchaseId}
+      // History records are never edited, only created (and deleted with the account).
+      match /purchaseHistory/{purchaseId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && validName(request.resource.data.name)
+          && validCategory(request.resource.data.category)
+          && optionalNumber(request.resource.data, 'quantity');
+        allow update: if false;
+      }
+    }
+  }
+}
