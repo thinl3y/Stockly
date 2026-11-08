@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Stockly",
+    "slug": "stockly",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stockly.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#2E7D5B",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.stockly.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "stockly",
+    "backgroundColor": "#F8FAF8",
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#F8FAF8",
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e3a5f9b2-3eef-4c43-8abd-f2a014b8e56e"
+      }
+    }
+  }
+}
